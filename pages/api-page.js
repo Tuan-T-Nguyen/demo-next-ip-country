@@ -1,28 +1,33 @@
 import Head from 'next/head'
 import Image from 'next/image'
-import Link from 'next/link'
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 import styles from '../styles/Home.module.css'
 
+const fetcher = (url) => fetch(url).then((res) => res.json());
 
-export async function getServerSideProps(context) {
-  return {
-    props: {
-      headers: context.req.headers
-    }, // will be passed to the page component as props
-  }
-}
-
-export default function Home({ headers }) {
+export default function ApiPage() {
   const [headerData, setHeaderData] = useState([]);
+
+  const { data, error } = useSWR('/api/hello', fetcher);
+  console.log('data: ', data);
 
   useEffect(() => {
     const result = [];
-    for (const key in headers) {
-      result.push({ key, value: headers[key] })
+    if (data && data.headers) {
+      for (const key in data.headers) {
+        result.push({ key, value: data.headers[key] })
+      }
+      setHeaderData(result)
     }
-    setHeaderData(result)
-  }, [headers]);
+
+  }, [data]);
+
+  if (error) return <div>Failed to load</div>;
+  if (!data) return <div>Loading...</div>;
+
+
 
   return (
     <div className={styles.container}>
